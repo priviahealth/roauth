@@ -28,6 +28,26 @@ module ROAuth
     authorization_params = sorted_sig_params.map {|key, value| [key, "\"#{value}\""].join("=") }.join(", ")
 
     %{OAuth } + authorization_params
+  end   
+  
+  def sign_url(oauth, uri, params = {}, http_method = :get)
+    oauth = oauth.dup   
+    oauth[:signature_method] ||= "HMAC-SHA1"
+    oauth[:version]          ||= "1.0" # Assumed version, according to the spec
+    oauth[:nonce]            ||= Base64.encode64(OpenSSL::Random.random_bytes(32)).gsub(/\W/, '')
+    oauth[:timestamp]        ||= Time.now.to_i
+    oauth[:token]            ||= oauth.delete(:access_key)
+    oauth[:token_secret]     ||= oauth.delete(:access_secret)  
+    
+    sig_params = oauth_params(oauth)
+    sig_params[:oauth_signature] = escape(
+      signature(oauth, uri, sig_params.merge(params), http_method)
+      )
+      
+    sorted_sig_params    = sig_params.sort_by{|k,v| [k.to_s, v.to_s] }
+    authorization_params = sorted_sig_params.map {|key, value| [key, "\"#{value}\""].join("=") }.join(", ")    
+    
+    uri + params + authorization_params    
   end
 
   def parse(header)
@@ -57,9 +77,21 @@ module ROAuth
 
     sig_params = params.dup
     sig_params.merge!(oauth_params(header))
+    
+    client_signature = client_signature.chomp.gsub(/\n/, "")
+    client_signature == signature(oauth, uri, sig_params, http_method)  
+  end     
+  
+  def signature(oauth, uri, params, http_method = :get)
+    uri = URI.parse(uri)
+    uri.query = nil
+    uri = uri.to_s
 
-    client_signature == signature(oauth, uri, sig_params, http_method)
-  end
+    sig_base = http_method.to_s.upcase + "&" + escape(uri) + "&" + escape(normalize(params))     
+    digest   = SIGNATURE_METHODS[oauth[:signature_method]] 
+    secret   = "#{escape(oauth[:consumer_key])}&#{escape(oauth[:token_secret])}"
+    Base64.encode64(OpenSSL::HMAC.digest(digest, secret, sig_base)).chomp.gsub(/\n/, "")     
+  end   
 
   protected
     def oauth_params(oauth)
@@ -70,18 +102,6 @@ module ROAuth
         hash["oauth_#{key}"] = escape(value)
         hash
       }
-    end
-
-    def signature(oauth, uri, params, http_method = :get)
-      uri = URI.parse(uri)
-      uri.query = nil
-      uri = uri.to_s
-
-      sig_base = http_method.to_s.upcase + "&" + escape(uri) + "&" + escape(normalize(params))
-      digest   = SIGNATURE_METHODS[oauth[:signature_method]]
-      secret   = "#{escape(oauth[:consumer_secret])}&#{escape(oauth[:token_secret])}"
-
-      Base64.encode64(OpenSSL::HMAC.digest(digest, secret, sig_base)).chomp.gsub(/\n/, "")
     end
 
     # Escape characters in a string according to the {OAuth spec}[http://oauth.net/core/1.0/]
