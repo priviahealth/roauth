@@ -42,7 +42,7 @@ module ROAuth
     sig_params = oauth_params(oauth)
     sig_params[:oauth_signature] = escape(
       signature(oauth, uri, sig_params.merge(params), http_method)
-      )
+    )
       
     sorted_sig_params    = sig_params.sort_by{|k,v| [k.to_s, v.to_s] }
     authorization_params = sorted_sig_params.map {|key, value| [key, "\"#{value}\""].join("=") }.join(", ")    
@@ -78,8 +78,7 @@ module ROAuth
     sig_params = params.dup
     sig_params.merge!(oauth_params(header))
     
-    client_signature = client_signature.chomp.gsub(/\n/, "")
-    client_signature == signature(oauth, uri, sig_params, http_method)  
+    client_signature == signature(oauth, uri, sig_params, http_method)
   end     
   
   def signature(oauth, uri, params, http_method = :get)
@@ -87,10 +86,11 @@ module ROAuth
     uri.query = nil
     uri = uri.to_s
 
-    sig_base = http_method.to_s.upcase + "&" + escape(uri) + "&" + escape(normalize(params))     
-    digest   = SIGNATURE_METHODS[oauth[:signature_method]] 
-    secret   = "#{escape(oauth[:consumer_key])}&#{escape(oauth[:token_secret])}"
-    Base64.encode64(OpenSSL::HMAC.digest(digest, secret, sig_base)).chomp.gsub(/\n/, "")     
+    sig_base = http_method.to_s.upcase + "&" + escape(uri) + "&" + escape(normalize(params))
+    digest   = SIGNATURE_METHODS[oauth[:signature_method]]
+    secret   = "#{escape(oauth[:consumer_secret])}&#{escape(oauth[:token_secret])}"
+
+    Base64.encode64(OpenSSL::HMAC.digest(digest, secret, sig_base)).chomp.gsub(/\n/, "") 
   end   
 
   protected
