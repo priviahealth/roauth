@@ -43,11 +43,8 @@ module ROAuth
     sig_params[:oauth_signature] = escape(
       signature(oauth, uri, sig_params.merge(params), http_method)
     )
-      
-    sorted_sig_params    = sig_params.sort_by{|k,v| [k.to_s, v.to_s] }
-    authorization_params = sorted_sig_params.map {|key, value| [key, "\"#{value}\""].join("=") }.join(", ")    
     
-    uri + params + authorization_params    
+    uri + '?' + normalize(params) + '&' + normalize(sig_params)
   end
 
   def parse(header)
