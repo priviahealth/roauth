@@ -90,6 +90,15 @@ module ROAuth
     Base64.encode64(OpenSSL::HMAC.digest(digest, secret, sig_base)).chomp.gsub(/\n/, "") 
   end   
 
+  # Escape characters in a string according to the {OAuth spec}[http://oauth.net/core/1.0/]
+  def escape(value)
+    URI.escape(value.to_s, /[^a-zA-Z0-9\-\.\_\~]/) # Unreserved characters -- must not be encoded
+  end
+
+  def unescape(value)
+    URI.unescape(value)
+  end
+
   protected
     def oauth_params(oauth)
       oauth = oauth.to_a.select {|key, value|
@@ -99,15 +108,6 @@ module ROAuth
         hash["oauth_#{key}"] = value
         hash
       }
-    end
-
-    # Escape characters in a string according to the {OAuth spec}[http://oauth.net/core/1.0/]
-    def escape(value)
-      URI.escape(value.to_s, /[^a-zA-Z0-9\-\.\_\~]/) # Unreserved characters -- must not be encoded
-    end
-
-    def unescape(value)
-      URI.unescape(value)
     end
 
     # Normalize a string of parameters based on the {OAuth spec}[http://oauth.net/core/1.0/#rfc.section.9.1.1]
