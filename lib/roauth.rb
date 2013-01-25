@@ -39,12 +39,17 @@ module ROAuth
     oauth[:token]            ||= oauth.delete(:access_key)
     oauth[:token_secret]     ||= oauth.delete(:access_secret)  
     
+    
+    uri + '?' + normalize(params) + '&' + normalized_sig_params(oauth, uri, params, http_method)
+  end
+
+  def normalized_sig_params(oauth, uri, params = {}, http_method = :get)
     sig_params = oauth_params(oauth)
     sig_params[:oauth_signature] = escape(
       signature(oauth, uri, sig_params.merge(params), http_method)
     )
-    
-    uri + '?' + normalize(params) + '&' + normalize(sig_params)
+
+    normalize(sig_params)
   end
 
   def parse(header)
