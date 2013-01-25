@@ -31,6 +31,10 @@ module ROAuth
   end   
   
   def sign_url(oauth, uri, params = {}, http_method = :get)
+    uri + '?' + normalize(params) + '&' + normalized_sig_params(oauth, uri, params, http_method)
+  end
+
+  def normalized_sig_params(oauth, uri, params = {}, http_method = :get)
     oauth = oauth.dup   
     oauth[:signature_method] ||= "HMAC-SHA1"
     oauth[:version]          ||= "1.0" # Assumed version, according to the spec
@@ -39,15 +43,8 @@ module ROAuth
     oauth[:token]            ||= oauth.delete(:access_key)
     oauth[:token_secret]     ||= oauth.delete(:access_secret)  
     
-    
-    uri + '?' + normalize(params) + '&' + normalized_sig_params(oauth, uri, params, http_method)
-  end
-
-  def normalized_sig_params(oauth, uri, params = {}, http_method = :get)
     sig_params = oauth_params(oauth)
-    sig_params[:oauth_signature] = escape(
-      signature(oauth, uri, sig_params.merge(params), http_method)
-    )
+    sig_params[:oauth_signature] = signature(oauth, uri, sig_params.merge(params), http_method)
 
     normalize(sig_params)
   end
