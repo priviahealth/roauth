@@ -1,3 +1,7 @@
+Forked from  k2052/roauth because it hasn't been updated in 4 years. 
+The ONLY change here is to change Digest::Digest to Digest so we don't get the deprecation warning any more
+
+
 Based on SOAuth: http://github.com/tofumatt/SOAuth
 
 A *simple* OAuth library that supports OAuth header signing, and header verifying.
