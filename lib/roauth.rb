@@ -7,7 +7,7 @@ module ROAuth
   class MissingOAuthParams < Exception; end
 
   # Supported {signature methods}[http://oauth.net/core/1.0/#signing_process];
-  SIGNATURE_METHODS = {"HMAC-SHA1" => OpenSSL::Digest::Digest.new("sha1")}
+  SIGNATURE_METHODS = {"HMAC-SHA1" => OpenSSL::Digest.new("sha1")}
   OAUTH_PARAMS      = [:consumer_key, :token, :signature_method, :version, :nonce, :timestamp, :body_hash, :callback]
 
   # Return an {OAuth "Authorization" HTTP header}[http://oauth.net/core/1.0/#auth_header] from request data
